@@ -1,0 +1,1 @@
+{ "name": "gate-dry-fixture", "private": true, "type": "module", "dependencies": { "pg": "8.13.1" } }
