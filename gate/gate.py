@@ -224,6 +224,7 @@ def run_preview(head, base, tid, task, contract, reg, policy):
     rn = sh(["docker", "run", "--rm", "--network", "bridge", "--mount", "type=bind,src=%s,dst=/r" % os.path.join(gatedir, "gate", "runner"), "-w", "/r", "-e", "npm_config_cache=/tmp/npm", IMG["pw"],
              "sh", "-c", "cp package.json package-lock.json /tmp/ && cd /tmp && npm ci --omit=dev --no-audit --no-fund >/dev/null && cp -r node_modules /r/"], timeout=900)
     if rn.returncode != 0: finish("BLOCKED:EVIDENCE", "gate runner dependencies could not be installed: %s" % rn.stderr.decode(errors="replace")[-300:])
+    r_err = None
     if h2:
         r = drun("gate-runner", IMG["pw"], ["node", "/gate/runner/run.mjs"], detach=False, user="pwuser", timeout=3000,
                  mounts=["type=bind,src=%s,dst=/gate,readonly" % os.path.join(gatedir, "gate"), "type=bind,src=%s,dst=/oracle,readonly" % os.path.join(gatedir, "oracle"),
@@ -231,7 +232,7 @@ def run_preview(head, base, tid, task, contract, reg, policy):
                          "type=bind,src=%s,dst=/node_modules,readonly" % os.path.join(gatedir, "gate", "runner", "node_modules")],
                  env={"NODE_PATH": "/gate/runner/node_modules", "PLAYWRIGHT_BROWSERS_PATH": "/ms-playwright"}, extra=["--shm-size", "1g"])
         OUT["checks"]["runner_rc"] = r.returncode
-        if r.returncode != 0: log("runner stderr:", r.stderr.decode(errors="replace")[-2000:])
+        r_err = r.stderr.decode(errors="replace")[-3000:]
     raw = sh(["docker", "exec", "gate-probe", "node", "-e", "fetch('http://ingest:9000/__raw').then(r=>r.arrayBuffer()).then(b=>process.stdout.write(Buffer.from(b)))"], quiet=True).stdout
     applog2 = sh(["docker", "logs", "gate-app"], quiet=True)
     h2b = wait_http("http://app:8080", "/healthz", tries=5); OUT["checks"]["healthz_before_restart"] = h2b
@@ -247,6 +248,9 @@ def run_preview(head, base, tid, task, contract, reg, policy):
             except Exception: continue
             res.setdefault(j["crit"], []).append(j)
     canary_hits = scan_canary(out, raw, applog2)
+    try: OUT["checks"]["runner_log_tail"] = open(os.path.join(out, "runner.log"), errors="replace").read()[-6000:]
+    except Exception: OUT["checks"]["runner_log_tail"] = None
+    if r_err: OUT["checks"]["runner_stderr_tail"] = r_err
     builtin = {"probe:preview-health": health_eval(h1, h2), "probe:restart": restart_eval(h2, h2b, h3), "probe:check-stage": ("pass" if check_ok else "fail", "check stage rc %s" % OUT["checks"]["check_stage"].get("rc")),
                "probe:dev-tooling": devtool_eval(headdir), "probe:canary": ("fail" if canary_hits else "pass", "canary found on %s" % canary_hits[:5] if canary_hits else "no canary on %d captured surfaces" % OUT["checks"].get("canary_surfaces", 0))}
     for crit, ref in owners.items():
