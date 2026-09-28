@@ -59,6 +59,11 @@ def finish(verdict, reason=None):
         with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f: f.write("## gate evidence\n```json\n" + js[:900000] + "\n```\n\n**VERDICT: %s**\n" % verdict)
     compact = {k: OUT[k] for k in ("head_sha", "base_sha", "task", "contract_sha256", "reasons")}
     compact["criteria"] = {k: v.get("status") for k, v in OUT["criteria"].items()}; compact["regression"] = {k: v.get("status") for k, v in OUT["regression"].items()}
+    # full evidence as compressed chunks in annotations (the only evidence channel readable with the agent App's permissions)
+    blob = base64.b64encode(zlib.compress(js.encode(), 9)).decode(); CH = 60000
+    parts = [blob[i:i + CH] for i in range(0, len(blob), CH)][:6]
+    for i, part in enumerate(parts): print("::notice title=gate-ev %d/%d::%s" % (i + 1, len(parts), part))
+    for f, data in SHOTS[:3]: print("::notice title=gate-shot %s::%s" % (f, data))
     print("::notice title=gate-verdict::%s" % verdict)
     print("::notice title=gate-evidence::%s" % json.dumps(compact, sort_keys=True, separators=(",", ":"))[:3800])
     print("GATE VERDICT: " + verdict)
@@ -66,7 +71,7 @@ def finish(verdict, reason=None):
     sys.exit(0 if verdict in ("DONE", "AMENDMENT-OK") else 1)
 
 # ------------------------------------------------------------------ docker preview environment ---------------------------------
-NET = "gate-pv-%s" % secrets.token_hex(4); CNT = []
+NET = "gate-pv-%s" % secrets.token_hex(4); CNT = []; SHOTS = []
 def cleanup():
     for c in CNT: subprocess.run(["docker", "rm", "-f", c], capture_output=True)
     subprocess.run(["docker", "network", "rm", NET], capture_output=True)
@@ -194,10 +199,10 @@ def run_preview(head, base, tid, task, contract, reg, policy):
     psql("create database checkdb")
     if has_check.returncode == 0:
         c = drun("gate-check-run", "gate-check", detach=False, env={"DATABASE_URL": url("checkdb"), "APP_ENV": "test", "APP_SECRET": base64.b64encode(os.urandom(32)).decode()}, timeout=1800)
-        OUT["checks"]["check_stage"] = {"rc": c.returncode, "tail": (c.stdout + c.stderr).decode(errors="replace")[-4000:]}
+        OUT["checks"]["check_stage"] = {"rc": c.returncode, "tail": (c.stdout + c.stderr).decode(errors="replace")[-8000:]}
         print("::group::check stage output"); print((c.stdout + c.stderr).decode(errors="replace")[-30000:]); print("::endgroup::")
     else:
-        OUT["checks"]["check_stage"] = {"rc": None, "build_error": has_check.stderr.decode(errors="replace")[-3000:]}
+        OUT["checks"]["check_stage"] = {"rc": None, "build_error": (has_check.stdout + has_check.stderr).decode(errors="replace")[-6000:]}
     check_ok = has_check.returncode == 0 and OUT["checks"]["check_stage"]["rc"] == 0
     # ---------------- preview: seed template -> clone -> start (twice: idempotent migrations/seed) ----------------
     app_env = {"PORT": "8080", "APP_ENV": "preview", "APP_URL": "http://app:8080", "APP_RELEASE": rel, "APP_SECRET": base64.b64encode(os.urandom(32)).decode(),
@@ -257,8 +262,8 @@ def run_preview(head, base, tid, task, contract, reg, policy):
     for crit in [c["id"] for c in contract.get("criteria", []) if c.get("priority") == "must"]:
         if "%s:%s" % (tid, crit) not in OUT["criteria"]: OUT["criteria"]["%s:%s" % (tid, crit)] = {"status": "Unknown", "check": None, "detail": "no owner-approved oracle or probe mapped"}
     shots = sorted(f for f in os.listdir(os.path.join(out, "shots"))) if os.path.isdir(os.path.join(out, "shots")) else []
-    for f in shots:   # screenshots (for owner baseline decisions) - printed as base64 in the log only
-        print("GATE-SHOT %s %s" % (f, base64.b64encode(open(os.path.join(out, "shots", f), "rb").read()).decode()))
+    for f in shots:   # screenshots (for owner baseline decisions): published as annotations by finish()
+        SHOTS.append((f, base64.b64encode(open(os.path.join(out, "shots", f), "rb").read()).decode()))
     for f in sorted(os.listdir(out)):
         if f.startswith("oracle-") or f in ("runner.log", "ingest-summary.json"):
             print("::group::%s" % f); print(open(os.path.join(out, f), errors="replace").read()[-40000:]); print("::endgroup::")
