@@ -40,7 +40,7 @@ const PROBES = {
           for (let i = 0; i < n; i++) { const h = await l.nth(i).getAttribute('href'); if (h && new URL(h, BASE).pathname === href && await l.nth(i).isVisible()) ok = true; }
           if (!ok) bad.push(`${w}px: no visible link "${name}" -> ${href}`);
         }
-      } catch (e) { bad.push(`${w}px: ${e.message.split('\n')[0]}`); } finally { await ctx.close(); }
+      } catch (e) { return ['unknown', `${w}px: ${e.message.split('\n')[0]}`]; } finally { await ctx.close(); }
     }
     return bad.length ? ['fail', bad.join('; ')] : ['pass', 'widths ' + p.widths.join(',')];
   },
@@ -94,7 +94,7 @@ const PROBES = {
         if (a.width !== b.width || a.height !== b.height) { bad.push(`${s.name}: size ${b.width}x${b.height} vs baseline ${a.width}x${a.height}`); continue; }
         const d = pixelmatch(a.data, b.data, null, a.width, a.height, { threshold: 0.1 }); const r = d / (a.width * a.height);
         if (r > (p.max_ratio || 0.01)) bad.push(`${s.name}: ${(r * 100).toFixed(2)}% pixels differ`);
-      } catch (e) { bad.push(`${s.name}: ${e.message.split('\n')[0]}`); } finally { await ctx.close(); }
+      } catch (e) { return ['unknown', `${s.name}: ${e.message.split('\n')[0]}`]; } finally { await ctx.close(); }
     }
     if (bad.length) return ['fail', bad.join('; ')];
     if (missing.length) return ['unknown', 'no owner-approved baseline yet for ' + missing.join(',')];

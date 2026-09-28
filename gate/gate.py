@@ -205,18 +205,18 @@ def run_preview(head, base, tid, task, contract, reg, policy):
         OUT["checks"]["check_stage"] = {"rc": None, "build_error": (has_check.stdout + has_check.stderr).decode(errors="replace")[-6000:]}
     check_ok = has_check.returncode == 0 and OUT["checks"]["check_stage"]["rc"] == 0
     # ---------------- preview: seed template -> clone -> start (twice: idempotent migrations/seed) ----------------
-    app_env = {"PORT": "8080", "APP_ENV": "preview", "APP_URL": "http://app:8080", "APP_RELEASE": rel, "APP_SECRET": base64.b64encode(os.urandom(32)).decode(),
+    app_env = {"PORT": "8080", "APP_ENV": "preview", "APP_URL": "http://preview:8080", "APP_RELEASE": rel, "APP_SECRET": base64.b64encode(os.urandom(32)).decode(),
                "V0_SECRET_CANARY": CANARY, "SENTRY_DSN": dsn, "PUBLIC_SENTRY_DSN": dsn, "BOOK_API_BASE_URL": "http://books:9100"}
     psql("create database seed")
-    drun("gate-app-seed", "gate-app", env=dict(app_env, DATABASE_URL=url("seed")), aliases=["app"])
-    h1 = wait_http("http://app:8080", "/healthz")
+    drun("gate-app-seed", "gate-app", env=dict(app_env, DATABASE_URL=url("seed")), aliases=["preview"])
+    h1 = wait_http("http://preview:8080", "/healthz")
     OUT["checks"]["seed_start_healthz"] = h1
     sh(["docker", "logs", "gate-app-seed"], quiet=True)
     applog1 = sh(["docker", "logs", "gate-app-seed"], quiet=True); sh(["docker", "rm", "-f", "gate-app-seed"]); CNT.remove("gate-app-seed")
     psql("select pg_terminate_backend(pid) from pg_stat_activity where datname='seed'")
     cl = psql("create database preview template seed"); OUT["checks"]["clone_from_seed_template"] = cl.returncode == 0
-    drun("gate-app", "gate-app", env=dict(app_env, DATABASE_URL=url("preview")), aliases=["app"])
-    h2 = wait_http("http://app:8080", "/healthz"); OUT["checks"]["preview_healthz"] = h2
+    drun("gate-app", "gate-app", env=dict(app_env, DATABASE_URL=url("preview")), aliases=["preview"])
+    h2 = wait_http("http://preview:8080", "/healthz"); OUT["checks"]["preview_healthz"] = h2
     health = parse_health(h2)
     # ---------------- probes + oracles ----------------
     plan, owners = build_plan(tid, task, contract, reg, health, rel)
@@ -235,11 +235,11 @@ def run_preview(head, base, tid, task, contract, reg, policy):
         r_err = r.stderr.decode(errors="replace")[-3000:]
     raw = sh(["docker", "exec", "gate-probe", "node", "-e", "fetch('http://ingest:9000/__raw').then(r=>r.arrayBuffer()).then(b=>process.stdout.write(Buffer.from(b)))"], quiet=True).stdout
     applog2 = sh(["docker", "logs", "gate-app"], quiet=True)
-    h2b = wait_http("http://app:8080", "/healthz", tries=5); OUT["checks"]["healthz_before_restart"] = h2b
+    h2b = wait_http("http://preview:8080", "/healthz", tries=5); OUT["checks"]["healthz_before_restart"] = h2b
     # restart on the same database (T0 AC2 and every regression run): stop, start a fresh container, healthy again, users unchanged
     sh(["docker", "rm", "-f", "gate-app"]); CNT.remove("gate-app")
-    drun("gate-app2", "gate-app", env=dict(app_env, DATABASE_URL=url("preview")), aliases=["app"])
-    h3 = wait_http("http://app:8080", "/healthz"); OUT["checks"]["restart_healthz"] = h3
+    drun("gate-app2", "gate-app", env=dict(app_env, DATABASE_URL=url("preview")), aliases=["preview"])
+    h3 = wait_http("http://preview:8080", "/healthz"); OUT["checks"]["restart_healthz"] = h3
     # ---------------- evaluate ----------------
     res = {}
     if os.path.exists(os.path.join(out, "results.jsonl")):
@@ -331,7 +331,7 @@ def build_plan(tid, task, contract, reg, health, rel):
     done = {t for t, _, _ in reg} | {tid}
     books = "T3" in done and tid != "T3" or tid == "T3"; share = "T4" in done
     probes.append({"name": "crawl", "params": {"routes": sorted(routes), "auth": auth, "books": books, "share": share}})
-    plan = {"base": "http://app:8080", "ingest": "http://ingest:9000", "release": rel, "app_env": "preview",
+    plan = {"base": "http://preview:8080", "ingest": "http://ingest:9000", "release": rel, "app_env": "preview",
             "users": {"alice": {"email": "alice@example.test", "password": "Correct-Horse-1"}, "bob": {"email": "bob@example.test", "password": "Battery-Staple-2"}},
             "probes": probes, "oracles": list(oracles.values())}
     return plan, owners
