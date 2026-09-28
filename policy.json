@@ -1,0 +1,6 @@
+{
+ "owner_login": "FamilySYNC13",
+ "note": "Foundation v1 policy (synthetic). Owner holds every non-engineering decision right; merge authority = owner approval + required gate check (ruleset).",
+ "protected_paths": ["oracle/**", "baselines/**", "tasks/**", ".github/**", "CODEOWNERS", "gate/**", "policy.json"],
+ "decision_rights": {"engineering": "workers", "product": "owner", "design": "owner", "architecture": "owner", "operational": "owner", "security_financial": "owner"}
+}

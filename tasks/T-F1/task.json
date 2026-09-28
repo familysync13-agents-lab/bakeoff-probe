@@ -1,0 +1,12 @@
+{
+ "id": "T-F1",
+ "status": "CONTRACTED",
+ "contract": "tasks/T-F1/contract.json",
+ "approval": {
+  "by": "FamilySYNC13",
+  "contract_sha256": "2fd13c2ab5af6133eaf99a6f1662168f40e9ca99739b562474aeadffbdc094f5",
+  "note": "approved by the owner when the foundation bootstrap commit was reviewed"
+ },
+ "oracles": {},
+ "amendments": []
+}

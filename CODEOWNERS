@@ -1,0 +1,8 @@
+# Owner review is required for every authoritative / enforcement path (tamper gate backstop).
+/oracle/      @FamilySYNC13
+/baselines/   @FamilySYNC13
+/tasks/       @FamilySYNC13
+/.github/     @FamilySYNC13
+/CODEOWNERS   @FamilySYNC13
+/gate/        @FamilySYNC13
+/policy.json  @FamilySYNC13

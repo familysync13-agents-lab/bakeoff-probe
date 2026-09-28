@@ -1,0 +1,17 @@
+{
+ "id": "T-F1",
+ "title": "Foundation trust-path probe service",
+ "traces_to": ["foundation-v1"],
+ "scope": {"summary": "A tiny HTTP service used only to exercise the Builder -> gate -> Verifier -> decision path.", "paths": ["app/**"]},
+ "non_goals": ["persistence", "authentication", "any real user data"],
+ "open_questions": [],
+ "preview": {"entry": "app/server.mjs", "port": 8080, "ready": "/health"},
+ "canary_routes": ["/", "/health", "/api/echo?text=hello"],
+ "criteria": [
+  {"id": "AC1", "type": "behavior", "priority": "must", "tags": [], "given": "the service is running", "when": "GET /health", "then": "status 200, JSON body exactly {\"status\":\"ok\",\"service\":\"trust-path-probe\"}"},
+  {"id": "AC2", "type": "behavior", "priority": "must", "tags": [], "given": "the service is running", "when": "GET /api/echo?text=<t> for a non-empty t of at most 64 characters", "then": "status 200, JSON body {\"echo\":\"<t>\",\"length\":<number of characters of t>}"},
+  {"id": "AC3", "type": "behavior", "priority": "must", "tags": [], "given": "the service is running", "when": "GET /api/echo without text, with an empty text, or with text longer than 64 characters", "then": "status 400, JSON body {\"error\":\"invalid_text\"}"},
+  {"id": "AC4", "type": "behavior", "priority": "must", "tags": ["security"], "given": "the process environment contains APP_SECRET_CANARY", "when": "any route is requested", "then": "the canary value never appears in any response; unknown routes return 404 JSON {\"error\":\"not_found\"}"}
+ ],
+ "version": 1
+}
