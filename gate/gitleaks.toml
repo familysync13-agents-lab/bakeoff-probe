@@ -1,0 +1,8 @@
+# gitleaks configuration of the bake-off gate: default rules; the synthetic seed passwords published in the owner-approved
+# contracts (tasks/T0 contract, preview interface) are not secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "synthetic bake-off seed credentials from the contracts"
+regexes = ['''Correct-Horse-1''', '''Battery-Staple-2''']

@@ -1,0 +1,169 @@
+{
+ "id": "T2",
+ "title": "Authentication and reading-list CRUD with ownership",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T2"
+ ],
+ "tier": "critical",
+ "scope": {
+  "summary": "Email + password sign-up, sign-in and sign-out; users create, view, rename and delete their own reading lists; nobody else can read or change them.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "books in lists (T3)",
+  "sharing (T4)",
+  "password reset",
+  "email verification"
+ ],
+ "open_questions": [],
+ "interface": {
+  "ui": {
+   "signup": "GET /signup: fields labelled \"Name\", \"Email\", \"Password\"; button \"Sign up\". Success -> signed in and redirected to /lists.",
+   "login": "GET /login: fields labelled \"Email\", \"Password\"; button \"Sign in\". Success -> /lists. Failure -> stays on /login with an element role=alert containing \"Invalid\".",
+   "shell_signed_in": "When signed in, every page shows a button \"Sign out\" (signs out and goes to /).",
+   "lists_index": "GET /lists: heading \"My lists\"; one link per list of the signed-in user whose accessible name is the list name, pointing to /lists/{id}; a link or button \"New list\" to /lists/new.",
+   "create": "GET /lists/new: field labelled \"Name\"; button \"Create list\". Success -> /lists/{id} ({id} = one non-empty path segment).",
+   "show": "GET /lists/{id}: h1 = list name. For the owner: link \"Edit\" to /lists/{id}/edit and button \"Delete list\" (deletes immediately, no browser dialog, then goes to /lists).",
+   "edit": "GET /lists/{id}/edit: field labelled \"Name\" pre-filled; button \"Save\". Success -> /lists/{id}.",
+   "validation": "Invalid input re-displays the form with an element role=alert whose text mentions the invalid field (e.g. \"name\"); nothing is created or changed.",
+   "seed_users": [
+    {
+     "name": "Alice",
+     "email": "alice@example.test",
+     "password": "Correct-Horse-1"
+    },
+    {
+     "name": "Bob",
+     "email": "bob@example.test",
+     "password": "Battery-Staple-2"
+    }
+   ]
+  }
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "a visitor",
+   "when": "they sign up at /signup with a name, a new email and a password of at least 8 characters",
+   "then": "they end on /lists showing \"My lists\" and are signed in (\"Sign out\" visible)"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "the seeded user alice@example.test",
+   "when": "she signs in at /login with the correct password; separately, with a wrong password",
+   "then": "correct -> /lists; wrong -> stays on /login with a role=alert element containing \"Invalid\" and is not signed in"
+  },
+  {
+   "id": "AC3",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "a signed-in user",
+   "when": "they press \"Sign out\"",
+   "then": "they land on / and a subsequent GET /lists no longer shows their lists (redirect to /login)"
+  },
+  {
+   "id": "AC4",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a signed-in user",
+   "when": "they create a list with a valid name (1-100 characters) at /lists/new",
+   "then": "they land on /lists/{id} whose h1 is the name, and /lists shows a link with that name to /lists/{id}"
+  },
+  {
+   "id": "AC5",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a signed-in user on /lists/new or /lists/{id}/edit",
+   "when": "they submit an empty name or a name longer than 100 characters",
+   "then": "nothing is created or changed and the form shows a role=alert element mentioning \"name\"; a name of exactly 100 characters is accepted"
+  },
+  {
+   "id": "AC6",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "the owner of a list",
+   "when": "they rename it via \"Edit\" / \"Save\"",
+   "then": "/lists/{id} shows the new name, also after a reload and after signing out and in again"
+  },
+  {
+   "id": "AC7",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "data-loss"
+   ],
+   "given": "the owner of a list",
+   "when": "they press \"Delete list\"",
+   "then": "they land on /lists, the list is no longer listed, and afterwards GET /lists/{id} returns 404 for everyone, including the owner (the list is permanently removed)"
+  },
+  {
+   "id": "AC8",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "an anonymous visitor and an existing list of alice",
+   "when": "they request /lists, /lists/new, /lists/{id} and /lists/{id}/edit",
+   "then": "each ends on /login (redirect) or answers 401, 403 or 404; the list name is never shown"
+  },
+  {
+   "id": "AC9",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "bob signed in and an existing list of alice",
+   "when": "bob opens /lists, /lists/{alice-id} and /lists/{alice-id}/edit",
+   "then": "alice's list is not listed and both list URLs answer 403 or 404 (or redirect away) without showing the list name"
+  },
+  {
+   "id": "AC10",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "the exact state-changing HTTP requests alice's browser sent to rename and to delete her list",
+   "when": "each is re-sent unchanged (method, URL, body and non-cookie headers; any anti-forgery token taken from the replaying session) from bob's signed-in session and from an anonymous session",
+   "then": "alice's list is neither renamed nor deleted (verified afterwards in alice's session)"
+  },
+  {
+   "id": "AC11",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "data-loss"
+   ],
+   "given": "the owner deleted a list",
+   "when": "the owner opens /lists/{id} within 30 days",
+   "then": "the page shows the list name marked \"Deleted\" and a button \"Restore list\" that restores the list with its content"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/login",
+  "/signup",
+  "/lists"
+ ],
+ "version": 1
+}

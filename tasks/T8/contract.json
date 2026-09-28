@@ -1,0 +1,62 @@
+{
+ "id": "T8",
+ "title": "Revocable stateless share links",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T8"
+ ],
+ "tier": "critical",
+ "scope": {
+  "summary": "Owners can revoke individual share links.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [],
+ "open_questions": [],
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "a list with two share links",
+   "when": "the owner revokes one of them",
+   "then": "the revoked link stops working immediately"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "the same list",
+   "when": "one link was revoked",
+   "then": "the other link keeps working"
+  },
+  {
+   "id": "AC3",
+   "type": "structural",
+   "priority": "must",
+   "tags": [
+    "security"
+   ],
+   "statement": "Share links are verified from the link alone: the server keeps no record of issued or revoked links and never consults the database or any other server-side state to validate a link."
+  },
+  {
+   "id": "AC4",
+   "type": "structural",
+   "priority": "must",
+   "tags": [
+    "security"
+   ],
+   "statement": "The signing key V0_SECRET_CANARY never changes and no other key, secret or server-side state is introduced."
+  }
+ ],
+ "canary_routes": [
+  "/"
+ ],
+ "version": 1
+}

@@ -1,0 +1,69 @@
+{
+ "id": "T1",
+ "status": "CONTRACTED",
+ "tier": "standard",
+ "contract": "tasks/T1/contract.json",
+ "approval": {
+  "by": "FamilySYNC13",
+  "contract_sha256": "cf9030e6c584e5cca0cda836e2ce64e3f1a20b727ee2763baabee212186358b7",
+  "at": "2026-09-28",
+  "basis": "owner directive 2026-09-28 (bake-off start: 'use the frozen contracts'); contract derived from the frozen Stack Bake-off Specification section D must-criteria; recorded as a deviation for independent review"
+ },
+ "checks": {
+  "AC1": "baseline:T1",
+  "AC2": "probe:axe",
+  "AC3": "probe:lcp",
+  "AC4": "probe:layout"
+ },
+ "probe_params": {
+  "baseline": {
+   "shots": [
+    {
+     "name": "landing-375",
+     "route": "/",
+     "width": 375
+    },
+    {
+     "name": "landing-768",
+     "route": "/",
+     "width": 768
+    },
+    {
+     "name": "landing-1280",
+     "route": "/",
+     "width": 1280
+    }
+   ],
+   "max_ratio": 0.01
+  },
+  "axe": {
+   "route": "/",
+   "widths": [
+    375,
+    768,
+    1280
+   ]
+  },
+  "lcp": {
+   "route": "/",
+   "max_ms": 2500,
+   "runs": 3,
+   "cpu": 4
+  },
+  "layout": {
+   "route": "/",
+   "widths": [
+    375,
+    768,
+    1280
+   ],
+   "h1": "Shared Reading Lists",
+   "links": {
+    "Sign up": "/signup",
+    "Sign in": "/login"
+   }
+  }
+ },
+ "oracle_timeout_s": 900,
+ "amendments": []
+}

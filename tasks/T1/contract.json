@@ -1,0 +1,77 @@
+{
+ "id": "T1",
+ "title": "Polished responsive landing page and app shell",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T1"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "A polished, responsive public landing page at / for Shared Reading Lists and the app shell (header with the product name and primary navigation, main content area, footer) used by all pages.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "authentication (T2)",
+  "list features (T2+)"
+ ],
+ "open_questions": [],
+ "interface": {
+  "landing": "GET / (signed out): exactly one h1 containing the text \"Shared Reading Lists\"; a link with accessible name \"Sign up\" to /signup and a link with accessible name \"Sign in\" to /login (those pages arrive in T2)."
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "experience",
+   "priority": "must",
+   "tags": [
+    "design"
+   ],
+   "statement": "The landing page and app shell look polished and trustworthy, communicate what Shared Reading Lists does (create reading lists, add books, share them read-only) and work well at phone, tablet and desktop widths.",
+   "refs": [
+    "owner judgment at 375, 768 and 1280 px -> locked visual baselines baselines/T1/*"
+   ],
+   "check": "baseline:T1"
+  },
+  {
+   "id": "AC2",
+   "type": "threshold",
+   "priority": "must",
+   "tags": [
+    "accessibility"
+   ],
+   "metric": "axe-core violations with impact serious or critical (WCAG 2.1 A/AA rule tags)",
+   "target": "0",
+   "conditions": "GET / at 375, 768 and 1280 px width",
+   "check": "probe:axe"
+  },
+  {
+   "id": "AC3",
+   "type": "threshold",
+   "priority": "must",
+   "tags": [
+    "performance"
+   ],
+   "metric": "Largest Contentful Paint of GET /",
+   "target": "<= 2500 ms (median of 3 cold loads)",
+   "conditions": "preview in CI, Chromium, 375x812 viewport, 4x CPU throttling, no network throttling",
+   "check": "probe:lcp"
+  },
+  {
+   "id": "AC4",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "design"
+   ],
+   "given": "the landing page",
+   "when": "rendered at 375, 768 and 1280 px width",
+   "then": "no horizontal overflow (document scroll width <= viewport width), exactly one h1 containing \"Shared Reading Lists\", visible links \"Sign up\" (to /signup) and \"Sign in\" (to /login)",
+   "check": "probe:layout"
+  }
+ ],
+ "canary_routes": [
+  "/"
+ ],
+ "version": 1
+}

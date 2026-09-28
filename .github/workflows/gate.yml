@@ -2,18 +2,20 @@ name: gate
 on:
   pull_request:
     branches: [main]
+    types: [opened, synchronize, reopened]
   pull_request_review:
     types: [submitted, dismissed]
 permissions:
   contents: read
   pull-requests: read
+  actions: read
 concurrency:
-  group: gate-${{ github.event.pull_request.number }}
+  group: gate-${{ github.event.pull_request.number }}-${{ github.event_name }}
   cancel-in-progress: false
 jobs:
   gate:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 80
     steps:
       - name: gate (code taken from the base branch only)
         env:
@@ -25,5 +27,5 @@ jobs:
           git init -q w && cd w
           git fetch -q --no-tags "https://github.com/${GITHUB_REPOSITORY}" "+refs/heads/main:refs/remotes/origin/main" "+refs/pull/${PR_NUM}/head:refs/remotes/pr/head"
           git cat-file -e "${BASE_SHA}^{commit}"
-          git show "${BASE_SHA}:gate/gate.py" > "${RUNNER_TEMP}/gate.py"
-          GATE_WORK="$PWD" python3 "${RUNNER_TEMP}/gate.py"
+          mkdir -p "${RUNNER_TEMP}/gatecode" && git archive "${BASE_SHA}" gate | tar -x -C "${RUNNER_TEMP}/gatecode"
+          GATE_WORK="$PWD" python3 "${RUNNER_TEMP}/gatecode/gate/gate.py"

@@ -1,0 +1,64 @@
+{
+ "id": "T6",
+ "title": "Change request: list descriptions",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T6"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "Lists get an optional description, set when creating or editing a list and shown on the list page and on the share page.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "rich text"
+ ],
+ "open_questions": [],
+ "interface": {
+  "ui": "Create and edit forms get a field labelled \"Description\" (optional, at most 500 characters). The list page and the share page show the description (when present) as text directly below the h1."
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "alice",
+   "when": "she creates a list with a description, and edits it to a different description",
+   "then": "the list page shows the current description, also after a reload"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a list with a description and a share link",
+   "when": "the share link is opened anonymously",
+   "then": "the description is shown"
+  },
+  {
+   "id": "AC3",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "alice on the create or edit form",
+   "when": "she submits a description longer than 500 characters",
+   "then": "nothing is saved and a role=alert element mentions \"description\"; exactly 500 characters are accepted"
+  },
+  {
+   "id": "AC4",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a list without a description",
+   "when": "it is viewed, shared and edited",
+   "then": "it works as before and shows no empty description placeholder text"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/lists"
+ ],
+ "version": 1
+}

@@ -1,0 +1,97 @@
+{
+ "id": "T3",
+ "title": "Book search integration",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T3"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "The owner of a list searches the public book-search API (Open Library format) and adds books to the list; timeouts and API errors are handled.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "covers/images",
+  "removing books",
+  "pagination"
+ ],
+ "open_questions": [],
+ "interface": {
+  "ui": {
+   "search": "On /lists/{id} the owner sees a search field labelled \"Search books\" and a button \"Search\". Results render inside an element with accessible name \"Search results\", one list item per book in API order (at most 10), each showing the title, the author(s) and the first publish year, and a button \"Add\".",
+   "empty": "No results -> the text \"No books found\".",
+   "error": "API error, malformed response or timeout -> an element role=alert containing \"Book search is unavailable\"; the rest of the page keeps working.",
+   "books": "The list page shows a section with heading \"Books\" listing each added book (title and author).",
+   "api": "GET {BOOK_API_BASE_URL}/search.json?q=<query>&limit=10 -> Open Library format {\"numFound\":n,\"docs\":[{\"key\":\"/works/...\",\"title\":...,\"author_name\":[...],\"first_publish_year\":n,\"cover_i\":n}]}. Fields may be missing.",
+   "test_double": "In previews BOOK_API_BASE_URL is a test double: q=__error__ -> HTTP 500; q=__malformed__ -> 200 with invalid JSON; q=__timeout__ -> never responds; q=zzzz-nothing -> {\"numFound\":0,\"docs\":[]}; other queries -> fixed Open Library-format results."
+  }
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "alice on her list page",
+   "when": "she searches for \"dune\"",
+   "then": "the results show, per API doc and in API order, title = title, author = author_name (first or all names), year = first_publish_year"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "alice on her list page",
+   "when": "she searches for \"zzzz-nothing\"",
+   "then": "the text \"No books found\" is shown and no result items"
+  },
+  {
+   "id": "AC3",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the book API answers with HTTP 500 (q=__error__) or with invalid JSON (q=__malformed__)",
+   "when": "alice searches",
+   "then": "within 6 s a role=alert element containing \"Book search is unavailable\" is shown and the page stays usable (a following search for \"dune\" works)"
+  },
+  {
+   "id": "AC4",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the book API never responds (q=__timeout__)",
+   "when": "alice searches",
+   "then": "within 8 s a role=alert element containing \"Book search is unavailable\" is shown (the app gives up after at most 5 s) and the page stays usable"
+  },
+  {
+   "id": "AC5",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "search results for \"dune\"",
+   "when": "alice presses \"Add\" on a result",
+   "then": "the book appears under \"Books\" with its title and author, also after a reload; adding the same book again does not create a second entry"
+  },
+  {
+   "id": "AC6",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "a list of alice",
+   "when": "bob (signed in) or an anonymous visitor re-sends alice's exact add-book request (as in T2 AC10)",
+   "then": "no book is added to alice's list"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/lists"
+ ],
+ "version": 1
+}

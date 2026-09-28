@@ -1,0 +1,49 @@
+# Small, identical SAST ruleset for both candidates (findings are recorded as evidence; they do not block).
+rules:
+  - id: canary-env-in-client-code
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: V0_SECRET_CANARY referenced in a file that may be bundled for the browser
+    patterns:
+      - pattern-either:
+          - pattern: process.env.V0_SECRET_CANARY
+          - pattern: import.meta.env.V0_SECRET_CANARY
+    paths:
+      include: ["*.tsx", "*.jsx", "resources/js/**", "app/**/*client*"]
+  - id: js-eval
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: eval / Function constructor
+    pattern-either:
+      - pattern: eval(...)
+      - pattern: new Function(...)
+  - id: react-dangerously-set-inner-html
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: dangerouslySetInnerHTML
+    pattern: <$X dangerouslySetInnerHTML={...} />
+  - id: php-raw-sql-concat
+    languages: [php]
+    severity: WARNING
+    message: raw SQL built from a variable
+    pattern-either:
+      - pattern: DB::raw("..." . $X)
+      - pattern: DB::select("..." . $X, ...)
+      - pattern: DB::statement("..." . $X, ...)
+      - pattern: $Q->whereRaw("..." . $X, ...)
+  - id: php-exec
+    languages: [php]
+    severity: WARNING
+    message: shell execution
+    pattern-either:
+      - pattern: exec(...)
+      - pattern: shell_exec(...)
+      - pattern: system(...)
+      - pattern: passthru(...)
+  - id: sql-template-interpolation
+    languages: [typescript, javascript]
+    severity: WARNING
+    message: sql.raw / unsafe interpolation
+    pattern-either:
+      - pattern: sql.raw(`...${$X}...`)
+      - pattern: $DB.execute(`...${$X}...`)

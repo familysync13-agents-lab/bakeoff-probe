@@ -1,2 +1,3 @@
-# Baselines
-Owner-approved visual/threshold baselines (authoritative state). Protected like oracle/.
+# Visual baselines
+
+Owner-approved screenshots (authoritative design state). Protected path: changed only by an owner-approved amendment.

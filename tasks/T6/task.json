@@ -1,0 +1,16 @@
+{
+ "id": "T6",
+ "status": "CONTRACTED",
+ "tier": "standard",
+ "contract": "tasks/T6/contract.json",
+ "approval": {
+  "by": "FamilySYNC13",
+  "contract_sha256": "0518e2e1ee4eeb3c3d35fe50b90a83dc7425346a0133ab903ab1568ef1f54552",
+  "at": "2026-09-28",
+  "basis": "owner directive 2026-09-28 (bake-off start: 'use the frozen contracts'); contract derived from the frozen Stack Bake-off Specification section D must-criteria; recorded as a deviation for independent review"
+ },
+ "checks": {},
+ "probe_params": {},
+ "oracle_timeout_s": 900,
+ "amendments": []
+}

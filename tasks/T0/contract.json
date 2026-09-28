@@ -1,0 +1,118 @@
+{
+ "id": "T0",
+ "title": "Setup: scaffold, gate entrypoint, CI, preview deploys, error monitoring, seed data",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T0"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "Scaffold the Shared Reading Lists application on this candidate's stack and make it satisfy the shared preview interface, so that the shared gate can build, test and start a preview for every pull request with non-production configuration.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "product features beyond the health endpoint and seed data",
+  "production deployment",
+  "changing CI workflows (the shared gate is provided)"
+ ],
+ "open_questions": [],
+ "interface": {
+  "preview": {
+   "dockerfile": "Dockerfile at the repository root. Default (last) stage = the production-mode preview image; a stage named `check` runs the candidate's lint, type-check and automated tests.",
+   "build_args": {
+    "APP_RELEASE": "git SHA of the commit under test",
+    "PUBLIC_SENTRY_DSN": "browser DSN of the error-monitoring ingest (may be empty)"
+   },
+   "runtime_env": {
+    "PORT": "8080 - listen on 0.0.0.0:$PORT",
+    "APP_ENV": "preview (non-production configuration; never 'production' in the bake-off)",
+    "APP_URL": "absolute base URL the preview is reached at (e.g. http://app:8080)",
+    "APP_RELEASE": "git SHA of the commit under test",
+    "APP_SECRET": "random 32-byte base64 value per start; use for session/encryption keys",
+    "DATABASE_URL": "postgres://USER:PASSWORD@HOST:5432/DB (a database cloned from the seed template, or empty on first start)",
+    "V0_SECRET_CANARY": "synthetic server-side secret (random per run); used as the share-link signing key from T4; must never reach any client-visible surface",
+    "SENTRY_DSN": "server-side DSN of a Sentry-protocol ingest (may be empty)",
+    "PUBLIC_SENTRY_DSN": "browser-side DSN of the same ingest (may be empty)",
+    "BOOK_API_BASE_URL": "base URL of the book-search API (Open Library /search.json format); in previews a test double"
+   },
+   "startup": "On start the container applies all database migrations and the seed (both idempotent), then serves HTTP. No network access other than the database, the ingest and the book API is available to the preview.",
+   "runtime_constraints": "The container runs with ALL Linux capabilities dropped and no-new-privileges (no chown/setuid/privilege switching at runtime), on an internal network, with at most 4 GB memory. Build (docker build) has normal internet access; the running preview has none.",
+   "check_stage_env": {
+    "DATABASE_URL": "an empty PostgreSQL database for tests",
+    "APP_ENV": "test"
+   },
+   "seed_users": [
+    {
+     "name": "Alice",
+     "email": "alice@example.test",
+     "password": "Correct-Horse-1"
+    },
+    {
+     "name": "Bob",
+     "email": "bob@example.test",
+     "password": "Battery-Staple-2"
+    }
+   ]
+  },
+  "health": "GET /healthz -> 200 application/json {\"status\":\"ok\",\"env\":<APP_ENV>,\"users\":<number of user accounts in the database>}"
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the repository at the PR head",
+   "when": "the shared gate builds the default Dockerfile stage and starts it with the preview environment against an empty PostgreSQL database",
+   "then": "within 180 s GET /healthz returns 200 with JSON status \"ok\" and env equal to APP_ENV (\"preview\")"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the preview from AC1 was stopped",
+   "when": "a second container of the same image is started against the same database",
+   "then": "it becomes healthy again and GET /healthz reports users = 2 (migrations and seed are idempotent: exactly the two seed users exist)"
+  },
+  {
+   "id": "AC3",
+   "type": "structural",
+   "priority": "must",
+   "tags": [],
+   "statement": "The gate runs in CI: the Dockerfile stage `check` builds and, run with DATABASE_URL pointing at an empty test database, executes the candidate's lint, type-check and automated test suite (at least one test) and exits 0.",
+   "check": "probe:check-stage"
+  },
+  {
+   "id": "AC4",
+   "type": "structural",
+   "priority": "must",
+   "tags": [
+    "security"
+   ],
+   "statement": "Agent tooling (Laravel Boost, next-devtools-mcp or any other MCP/agent package) is a development-only dependency: it is absent from the production dependency set (composer.lock \"packages\"; package.json \"dependencies\").",
+   "check": "probe:dev-tooling"
+  },
+  {
+   "id": "AC5",
+   "type": "behavior",
+   "priority": "should",
+   "tags": [
+    "operational"
+   ],
+   "given": "SENTRY_DSN and PUBLIC_SENTRY_DSN are set",
+   "when": "the app starts",
+   "then": "the error-monitoring SDK (Sentry SDK) is initialised server-side and in the browser with release = APP_RELEASE and environment = APP_ENV; with empty DSNs the app runs normally"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/healthz"
+ ],
+ "version": 1
+}

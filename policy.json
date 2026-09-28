@@ -1,6 +1,38 @@
 {
  "owner_login": "FamilySYNC13",
- "note": "Foundation v1 policy (synthetic). Owner holds every non-engineering decision right; merge authority = owner approval + required gate check (ruleset).",
- "protected_paths": ["oracle/**", "baselines/**", "tasks/**", ".github/**", "CODEOWNERS", "gate/**", "policy.json"],
- "decision_rights": {"engineering": "workers", "product": "owner", "design": "owner", "architecture": "owner", "operational": "owner", "security_financial": "owner"}
+ "note": "Pre-V0 bake-off policy (both candidates identical). The owner holds every non-engineering decision right; merge authority = owner approval + required gate check (ruleset, empty bypass list).",
+ "protected_paths": [
+  "oracle/**",
+  "baselines/**",
+  "tasks/**",
+  ".github/**",
+  "CODEOWNERS",
+  "gate/**",
+  "policy.json"
+ ],
+ "owner_only_paths": [
+  ".github/**",
+  "gate/**",
+  "CODEOWNERS",
+  "policy.json"
+ ],
+ "decision_rights": {
+  "engineering": "workers",
+  "product": "owner",
+  "design": "owner",
+  "architecture": "owner",
+  "operational": "owner",
+  "security_financial": "owner"
+ },
+ "task_order": [
+  "T0",
+  "T1",
+  "T2",
+  "T3",
+  "T4",
+  "T5",
+  "T6",
+  "T7",
+  "T8"
+ ]
 }

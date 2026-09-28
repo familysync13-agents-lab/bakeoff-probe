@@ -1,0 +1,11 @@
+{
+ "name": "bakeoff-gate-runner",
+ "private": true,
+ "description": "Pinned modules of the bake-off gate runner and of every oracle (identical in CI and in the Verifier image)",
+ "dependencies": {
+  "axe-core": "4.13.0",
+  "pixelmatch": "7.2.0",
+  "playwright": "1.63.0",
+  "pngjs": "7.0.0"
+ }
+}

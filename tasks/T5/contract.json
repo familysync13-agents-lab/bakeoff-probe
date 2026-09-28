@@ -1,0 +1,65 @@
+{
+ "id": "T5",
+ "title": "Error monitoring",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T5"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "A forced server error and a forced client error are both reported to the error-monitoring service (Sentry protocol) with the release tag.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "alerting",
+  "performance tracing"
+ ],
+ "open_questions": [],
+ "interface": {
+  "server_error": "GET /debug/server-error raises an unhandled server-side exception (HTTP 500). Available when APP_ENV is not \"production\".",
+  "client_error": "GET /debug/client-error shows a button \"Trigger client error\" that throws an unhandled JavaScript error in the browser. Available when APP_ENV is not \"production\".",
+  "ingest": "SENTRY_DSN / PUBLIC_SENTRY_DSN point at a Sentry-protocol ingest (store or envelope endpoint)."
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the preview with SENTRY_DSN set",
+   "when": "GET /debug/server-error",
+   "then": "within 20 s the ingest receives an error event with exception information, release = APP_RELEASE and environment = APP_ENV",
+   "check": "probe:sentry"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "operational"
+   ],
+   "given": "the preview with PUBLIC_SENTRY_DSN set",
+   "when": "a browser opens /debug/client-error and presses \"Trigger client error\"",
+   "then": "within 20 s the ingest receives an error event sent by the browser SDK with exception information and release = APP_RELEASE",
+   "check": "probe:sentry"
+  },
+  {
+   "id": "AC3",
+   "type": "structural",
+   "priority": "must",
+   "tags": [
+    "security"
+   ],
+   "statement": "Error events never contain V0_SECRET_CANARY.",
+   "check": "probe:sentry"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/debug/client-error"
+ ],
+ "version": 1
+}

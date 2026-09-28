@@ -1,0 +1,110 @@
+{
+ "id": "T4",
+ "title": "Signed read-only share links",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T4"
+ ],
+ "tier": "critical",
+ "scope": {
+  "summary": "The owner creates an expiring, HMAC-signed link that gives anyone read-only access to one list.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [
+  "revoking links",
+  "listing issued links"
+ ],
+ "open_questions": [],
+ "interface": {
+  "ui": {
+   "create": "On /lists/{id} the owner sees a select labelled \"Link expires in\" with options \"1 minute\", \"1 day\", \"7 days\" (default \"7 days\") and a button \"Create share link\"; afterwards a read-only text field labelled \"Share link\" contains an absolute URL {APP_URL}/s/{token}.",
+   "view": "GET /s/{token} (anyone, no sign-in): h1 = list name and the list's books (title, author); no controls to edit, delete, search, add or create share links.",
+   "signing": "The token is signed with HMAC-SHA256 using V0_SECRET_CANARY; it binds the list and the expiry time."
+  }
+ },
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "alice created a share link for her list with books",
+   "when": "an anonymous visitor opens it",
+   "then": "they see the list name and its books, and no Edit, Delete list, Search, Add or Create share link controls"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz",
+    "security"
+   ],
+   "given": "a valid share link",
+   "when": "any single character of the token is changed, or the token is truncated or extended",
+   "then": "the response is 403, 404 or 410 and does not contain the list name"
+  },
+  {
+   "id": "AC3",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "valid share links for two different lists",
+   "when": "each is opened",
+   "then": "each shows only its own list"
+  },
+  {
+   "id": "AC4",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "a share link created with \"1 minute\"",
+   "when": "it is opened immediately, and again 70 s or more after creation",
+   "then": "immediately it shows the list; later it answers 403, 404 or 410 without the list name"
+  },
+  {
+   "id": "AC5",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "authz"
+   ],
+   "given": "an anonymous visitor on a share page",
+   "when": "they re-send alice's exact rename, delete and add-book requests (as in T2 AC10)",
+   "then": "nothing changes"
+  },
+  {
+   "id": "AC6",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [
+    "data-loss"
+   ],
+   "given": "a share link of a list that the owner then deletes",
+   "when": "the link is opened",
+   "then": "it answers 404 or 410 without the list name"
+  },
+  {
+   "id": "AC7",
+   "type": "structural",
+   "priority": "must",
+   "tags": [
+    "security"
+   ],
+   "statement": "V0_SECRET_CANARY never reaches any client-visible surface (HTML, network responses, bundles, source maps, storage, cookies).",
+   "check": "probe:canary"
+  }
+ ],
+ "canary_routes": [
+  "/",
+  "/lists"
+ ],
+ "version": 1
+}

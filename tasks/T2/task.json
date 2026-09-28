@@ -1,0 +1,16 @@
+{
+ "id": "T2",
+ "status": "CONTRACTED",
+ "tier": "critical",
+ "contract": "tasks/T2/contract.json",
+ "approval": {
+  "by": "FamilySYNC13",
+  "contract_sha256": "255f0fe41dd8704e1413a8c04a3108d8e1d4d3f9bd9d63a942c24f7cb05054d4",
+  "at": "2026-09-28",
+  "basis": "owner directive 2026-09-28 (bake-off start: 'use the frozen contracts'); contract derived from the frozen Stack Bake-off Specification section D must-criteria; recorded as a deviation for independent review"
+ },
+ "checks": {},
+ "probe_params": {},
+ "oracle_timeout_s": 900,
+ "amendments": []
+}

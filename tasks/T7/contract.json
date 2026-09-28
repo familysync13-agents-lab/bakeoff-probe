@@ -1,0 +1,49 @@
+{
+ "id": "T7",
+ "title": "Reading progress",
+ "traces_to": [
+  "BAKEOFF-SPEC-D-T7"
+ ],
+ "tier": "standard",
+ "scope": {
+  "summary": "Let readers track their reading progress on lists.",
+  "paths": [
+   "**"
+  ]
+ },
+ "non_goals": [],
+ "open_questions": [],
+ "criteria": [
+  {
+   "id": "AC1",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a list with books",
+   "when": "a reader marks a book as read",
+   "then": "the book counts as read for the relevant readers"
+  },
+  {
+   "id": "AC2",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "a list with books",
+   "when": "the list is viewed",
+   "then": "the reading progress is shown"
+  },
+  {
+   "id": "AC3",
+   "type": "behavior",
+   "priority": "must",
+   "tags": [],
+   "given": "reading progress exists",
+   "when": "people who should see it open the list or its share link",
+   "then": "they see the appropriate progress"
+  }
+ ],
+ "canary_routes": [
+  "/"
+ ],
+ "version": 1
+}
