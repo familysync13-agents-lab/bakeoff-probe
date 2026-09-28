@@ -7,6 +7,22 @@
   "contract_sha256": "2fd13c2ab5af6133eaf99a6f1662168f40e9ca99739b562474aeadffbdc094f5",
   "note": "approved by the owner when the foundation bootstrap commit was reviewed"
  },
- "oracles": {},
- "amendments": []
+ "oracles": {
+  "AC1": "oracle/T-F1/check.mjs",
+  "AC2": "oracle/T-F1/check.mjs",
+  "AC3": "oracle/T-F1/check.mjs",
+  "AC4": "oracle/T-F1/check.mjs"
+ },
+ "amendments": [
+  {
+   "id": "A1",
+   "at": "2026-09-28T19:00:15Z",
+   "files": {
+    "oracle/T-F1/check.mjs": "e5a1c753045a881c0b71c4cd3ab6f4703f710522fff5b79c397689bba03cdca0"
+   },
+   "kind": "oracle-of-record",
+   "reason": "standard-tier black-box oracle written by the blind Verifier from the contract and the preview only",
+   "verifier": "Codex 0.157.1 (ChatGPT Plus), no repository access"
+  }
+ ]
 }
